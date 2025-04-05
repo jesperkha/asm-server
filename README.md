@@ -22,3 +22,4 @@ curl localhost:8080
 
 - [Syscall table](https://filippo.io/linux-syscall-table/)
 - [NASM Docs](https://leopard-adc.pepas.com/documentation/DeveloperTools/nasm/nasmdoc0.html)
+- Linux syscall man pages

@@ -1,5 +1,7 @@
 %define SYS_WRITE       1
+%define SYS_OPEN        2
 %define SYS_CLOSE       3
+%define SYS_LSEEK       8
 %define SYS_SENDFILE    40
 %define SYS_SOCKET      41
 %define SYS_ACCEPT      43
@@ -20,6 +22,8 @@ section .data
     error_msg:    db "error", 0
     shutdown_msg: db "Server shutdown", 0
 
+    response_filename: db "index.html", 0
+
     sockaddr:
         dw AF_INET
         dw 0x901f ; 8080
@@ -27,15 +31,10 @@ section .data
         dq 0
 
     client_addr_buf:
-        times 16 db 0
+        times 32 db 0
 
     client_addr_len:
         dq 0
-
-    response:
-        db "HTTP/1.0 200 OK", 10
-        db "Content-Type: text/html", 10, 10
-        db "Hello world!", 10, 0
 
 
 section .text
@@ -84,18 +83,49 @@ _start:
     js  error
 
     ; Serve page
-    mov  rdi, response
-    call strlen
-    mov  r12, rax ; length
-
-    mov rax, SYS_WRITE
-    mov rdi, [clientfd]
-    mov rsi, response
-    mov rdx, r12
+    mov rax, SYS_OPEN
+    mov rdi, response_filename
+    mov rsi, 0 ; RD_ONLY
     syscall
-    
+
+    mov r12, rax ; fd
+
     cmp rax, 0
     js  error
+
+    mov rax, SYS_LSEEK
+    mov rdi, r12
+    mov rsi, 0
+    mov rdx, 2 ; SEEK_END
+    syscall
+
+    mov r13, rax ; size
+
+    cmp rax, 0
+    js  error
+
+    mov rax, SYS_LSEEK
+    mov rdi, r12
+    mov rsi, 0
+    mov rdx, 0 ; beginning
+    syscall
+
+    cmp rax, 0
+    js  error
+
+    mov rax, SYS_SENDFILE
+    mov rdi, [clientfd] ; out_fd
+    mov rsi, r12        ; in_fd
+    mov rdx, 0          ; offset
+    mov r10, r13        ; size
+    syscall
+
+    cmp rax, 0
+    js  error
+
+    mov rax, SYS_CLOSE
+    mov rdi, r12
+    syscall
 
     ; Send shutdown signal to client and close
     mov rax, SYS_SHUTDOWN

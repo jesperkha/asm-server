@@ -1,6 +1,6 @@
 # asm-server
 
-Simple HTTP server in x86 NASM linux assembly. Ignores request and responds with hello.
+Simple HTTP server in x86 NASM linux assembly. Ignores request and responds with hello world html file.
 
 ### Build and run
 
@@ -12,11 +12,7 @@ cd asm-server
 make
 ```
 
-In another terminal window run:
-
-```sh
-curl localhost:8080
-```
+Go to `localhost:8080` in your browser.
 
 ### Resources
 
